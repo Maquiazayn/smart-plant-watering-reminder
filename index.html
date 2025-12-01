@@ -199,6 +199,134 @@
             opacity: 0.8;
         }
 
+        /* NEW: Status Table Styles */
+        .status-table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .status-table th {
+            background: #667eea;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .status-table td {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .status-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .status-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .moisture-range {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .status-label {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .algorithm-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            border-left: 5px solid #667eea;
+        }
+
+        .algorithm-title {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .algorithm-code {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            overflow-x: auto;
+            margin-top: 15px;
+        }
+
+        .algorithm-code .comment {
+            color: #a0aec0;
+        }
+
+        .algorithm-code .keyword {
+            color: #ff6b6b;
+        }
+
+        .algorithm-code .function {
+            color: #51cf66;
+        }
+
+        .algorithm-code .number {
+            color: #339af0;
+        }
+
+        .algorithm-data {
+            margin-top: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            border: 1px solid #e9ecef;
+        }
+
+        .algorithm-data h4 {
+            color: #495057;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .data-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #f1f3f5;
+        }
+
+        .data-item:last-child {
+            border-bottom: none;
+        }
+
+        .data-label {
+            color: #666;
+            font-weight: 500;
+        }
+
+        .data-value {
+            color: #333;
+            font-weight: 600;
+            font-family: monospace;
+        }
+
         @keyframes pulse {
             0% { opacity: 1; }
             50% { opacity: 0.7; }
@@ -212,6 +340,15 @@
             
             .header h1 {
                 font-size: 2rem;
+            }
+            
+            .status-table {
+                font-size: 0.9rem;
+            }
+            
+            .algorithm-code {
+                font-size: 0.8rem;
+                padding: 15px;
             }
         }
     </style>
@@ -235,6 +372,35 @@
                 <div class="gauge-container">
                     <canvas id="moistureGauge"></canvas>
                 </div>
+                
+                <!-- Status Table -->
+                <table class="status-table">
+                    <thead>
+                        <tr>
+                            <th>Moisture Range</th>
+                            <th>Status</th>
+                            <th>Action Required</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="moisture-range">0% – 30%</td>
+                            <td><span class="status-label status-need-water">NEED WATER</span></td>
+                            <td>Water the plant immediately</td>
+                        </tr>
+                        <tr>
+                            <td class="moisture-range">31% – 70%</td>
+                            <td><span class="status-label status-ok">OK</span></td>
+                            <td>No action needed - optimal range</td>
+                        </tr>
+                        <tr>
+                            <td class="moisture-range">71% – 100%</td>
+                            <td><span class="status-label status-too-wet">TOO WET</span></td>
+                            <td>Reduce watering frequency</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
                 <div class="last-update">
                     Last updated: <span id="lastUpdate">--</span>
                 </div>
@@ -260,14 +426,101 @@
                         <div class="stat-label">Updates Received</div>
                     </div>
                 </div>
+                
+                <!-- Algorithm Data Section -->
+                <div class="algorithm-data">
+                    <h4><i class="fas fa-calculator"></i> Algorithm Data</h4>
+                    <div class="data-item">
+                        <span class="data-label">Raw Sensor Value:</span>
+                        <span class="data-value" id="algorithmRawValue">--</span>
+                    </div>
+                    <div class="data-item">
+                        <span class="data-label">Calculated %:</span>
+                        <span class="data-value" id="algorithmPercentage">--%</span>
+                    </div>
+                    <div class="data-item">
+                        <span class="data-label">Dry Threshold:</span>
+                        <span class="data-value">30%</span>
+                    </div>
+                    <div class="data-item">
+                        <span class="data-label">Wet Threshold:</span>
+                        <span class="data-value">70%</span>
+                    </div>
+                    <div class="data-item">
+                        <span class="data-label">Calibration (Dry):</span>
+                        <span class="data-value">4095</span>
+                    </div>
+                    <div class="data-item">
+                        <span class="data-label">Calibration (Wet):</span>
+                        <span class="data-value">1500</span>
+                    </div>
+                </div>
+                
                 <div class="device-info">
                     <p>Device ID: <span class="device-id" id="deviceId">------</span></p>
                 </div>
             </div>
         </div>
 
+        <!-- Algorithm Section -->
         <div class="card">
-            <h2 class="card-title"><i class="fas fa-chart-line"></i> Moisture History</h2>
+            <h2 class="card-title"><i class="fas fa-code"></i> Moisture Algorithm</h2>
+            
+            <div class="algorithm-section">
+                <h3 class="algorithm-title"><i class="fas fa-cogs"></i> Conversion Algorithm</h3>
+                
+                <div class="algorithm-code">
+                    <span class="comment">// Convert analog reading (0-4095) to percentage (0-100)</span><br>
+                    <span class="keyword">function</span> <span class="function">calculateMoisturePercentage</span>(rawValue) {<br>
+                    &nbsp;&nbsp;<span class="comment">// Sensor calibration values</span><br>
+                    &nbsp;&nbsp;const <span class="keyword">DRY_VALUE</span> = <span class="number">4095</span>;  <span class="comment">// Value when sensor is dry (in air)</span><br>
+                    &nbsp;&nbsp;const <span class="keyword">WET_VALUE</span> = <span class="number">1500</span>;  <span class="comment">// Value when sensor is in water</span><br>
+                    <br>
+                    &nbsp;&nbsp;<span class="comment">// Constrain the raw value between wet and dry</span><br>
+                    &nbsp;&nbsp;rawValue = <span class="function">constrain</span>(rawValue, WET_VALUE, DRY_VALUE);<br>
+                    <br>
+                    &nbsp;&nbsp;<span class="comment">// Map the value to percentage</span><br>
+                    &nbsp;&nbsp;let percentage = <span class="function">map</span>(rawValue, DRY_VALUE, WET_VALUE, <span class="number">0</span>, <span class="number">100</span>);<br>
+                    <br>
+                    &nbsp;&nbsp;<span class="comment">// Ensure percentage is between 0-100</span><br>
+                    &nbsp;&nbsp;percentage = <span class="function">constrain</span>(percentage, <span class="number">0</span>, <span class="number">100</span>);<br>
+                    <br>
+                    &nbsp;&nbsp;<span class="keyword">return</span> percentage;<br>
+                    }<br>
+                    <br>
+                    <span class="comment">// Determine plant status based on moisture percentage</span><br>
+                    <span class="keyword">function</span> <span class="function">getMoistureStatus</span>(percentage) {<br>
+                    &nbsp;&nbsp;<span class="keyword">if</span> (percentage <= <span class="number">30</span>) {<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">return</span> <span class="string">"NEED WATER"</span>;<br>
+                    &nbsp;&nbsp;} <span class="keyword">else if</span> (percentage <= <span class="number">70</span>) {<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">return</span> <span class="string">"OK"</span>;<br>
+                    &nbsp;&nbsp;} <span class="keyword">else</span> {<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">return</span> <span class="string">"TOO WET"</span>;<br>
+                    &nbsp;&nbsp;}<br>
+                    }
+                </div>
+                
+                <div class="algorithm-data">
+                    <h4><i class="fas fa-chart-line"></i> Real-time Calculation</h4>
+                    <div class="data-item">
+                        <span class="data-label">Current Formula:</span>
+                        <span class="data-value">% = map(value, 4095, 1500, 0, 100)</span>
+                    </div>
+                    <div class="data-item">
+                        <span class="data-label">Mapping Function:</span>
+                        <span class="data-value">y = (x - x1) * (y2 - y1) / (x2 - x1) + y1</span>
+                    </div>
+                    <div class="data-item">
+                        <span class="data-label">Update Interval:</span>
+                        <span class="data-value">10 seconds</span>
+                    </div>
+                    <div class="data-item">
+                        <span class="data-label">Data Points Stored:</span>
+                        <span class="data-value" id="dataPoints">0</span>
+                    </div>
+                </div>
+            </div>
+            
             <div class="history-chart">
                 <canvas id="historyChart"></canvas>
             </div>
