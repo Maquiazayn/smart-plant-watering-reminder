@@ -1,19 +1,16 @@
-// Configuration
+// dashboard.js
 const FIREBASE_CONFIG = {
-    apiKey: "YOUR_FIREBASE_API_KEY",
-    authDomain: "YOUR_FIREBASE_PROJECT.firebaseapp.com",
-    databaseURL: "https://YOUR_FIREBASE_PROJECT.firebaseio.com",
-    projectId: "YOUR_FIREBASE_PROJECT",
-    storageBucket: "YOUR_FIREBASE_PROJECT.appspot.com",
-    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-    appId: "YOUR_APP_ID"
+    apiKey: "AIzaSyAi17Nr_DVUflPmsMzpx8pptqcZxT2AfUQ",
+    authDomain: "smart-plant-watering-rem-e050a.firebaseapp.com",
+    databaseURL: "https://smart-plant-watering-rem-e050a-default-rtdb.firebaseio.com",
+    projectId: "smart-plant-watering-rem-e050a",
+    storageBucket: "smart-plant-watering-rem-e050a.firebasestorage.app",
+    messagingSenderId: "658047903398",
+    appId: "1:658047903398:web:f94a57849c38e3da37b667",
+    measurementId: "G-LY0THX67S2"
 };
 
-// Initialize Firebase (only if Firebase is used)
-// Note: For GitHub Pages, you might want to use a backend proxy for security
-// This example uses direct Firebase REST API calls
-
-// Device ID (you can get this from ESP32 or use a default)
+// Device ID
 let currentDeviceId = null;
 let updateCount = 0;
 let moistureHistory = [];
@@ -40,7 +37,7 @@ function initDashboard() {
     initializeGauge();
     initializeHistoryChart();
     
-    // Try to get device ID from URL parameter or localStorage
+    // Get device ID from URL or localStorage
     const urlParams = new URLSearchParams(window.location.search);
     currentDeviceId = urlParams.get('device') || localStorage.getItem('plantDeviceId') || 'demo-device';
     
@@ -49,7 +46,10 @@ function initDashboard() {
     
     // Start periodic data fetching
     fetchData();
-    setInterval(fetchData, 10000); // Fetch every 10 seconds
+    setInterval(fetchData, 10000);
+    
+    // Add event listener for refresh button
+    document.querySelector('.refresh-btn').addEventListener('click', fetchData);
 }
 
 // Initialize moisture gauge
@@ -106,14 +106,10 @@ function initializeHistoryChart() {
                 y: {
                     beginAtZero: true,
                     max: 100,
-                    grid: {
-                        color: 'rgba(0,0,0,0.05)'
-                    }
+                    grid: { color: 'rgba(0,0,0,0.05)' }
                 },
                 x: {
-                    grid: {
-                        display: false
-                    }
+                    grid: { display: false }
                 }
             }
         }
@@ -125,7 +121,6 @@ function updateGauge(percentage) {
     if (moistureGauge) {
         moistureGauge.data.datasets[0].data = [percentage, 100 - percentage];
         
-        // Update color based on status
         let color;
         if (percentage <= 30) color = '#ff6b6b';
         else if (percentage <= 70) color = '#51cf66';
@@ -139,7 +134,10 @@ function updateGauge(percentage) {
 // Update history chart
 function updateHistoryChart(percentage, timestamp) {
     if (historyChart) {
-        const timeLabel = new Date(timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        const timeLabel = new Date(timestamp).toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
         
         moistureHistory.push({percentage, time: timeLabel});
         
@@ -169,6 +167,8 @@ function getStatusText(percentage) {
 
 // Update UI with sensor data
 function updateUI(data) {
+    if (!data) return;
+    
     const percentage = data.moisture_percent || 0;
     const statusClass = getStatusClass(percentage);
     const statusText = getStatusText(percentage);
@@ -201,26 +201,9 @@ function updateUI(data) {
     updateHistoryChart(percentage, data.timestamp || Date.now());
 }
 
-// Fetch data from Firebase or API
+// Fetch data from Firebase
 async function fetchData() {
     try {
-        // For demo purposes, we'll use mock data if no Firebase is configured
-        if (FIREBASE_CONFIG.apiKey === "YOUR_FIREBASE_API_KEY") {
-            // Generate mock data for demo
-            const mockData = {
-                device_id: currentDeviceId,
-                moisture_value: Math.floor(Math.random() * 4096),
-                moisture_percent: Math.random() * 100,
-                temperature: 22 + Math.random() * 5,
-                humidity: 40 + Math.random() * 30,
-                timestamp: Date.now(),
-                status: getStatusText(Math.random() * 100)
-            };
-            updateUI(mockData);
-            return;
-        }
-        
-        // Actual Firebase implementation
         const response = await fetch(
             `https://${FIREBASE_CONFIG.databaseURL}/plants/${currentDeviceId}/latest.json`
         );
@@ -228,9 +211,7 @@ async function fetchData() {
         if (!response.ok) throw new Error('Failed to fetch data');
         
         const data = await response.json();
-        if (data) {
-            updateUI(data);
-        }
+        updateUI(data);
         
     } catch (error) {
         console.error('Error fetching data:', error);
@@ -239,6 +220,20 @@ async function fetchData() {
         elements.moisturePercent.textContent = 'ERROR';
         elements.statusIndicator.textContent = 'CONNECTION FAILED';
         elements.statusIndicator.className = 'status-indicator status-need-water';
+        
+        // Try demo data as fallback
+        const demoData = {
+            device_id: currentDeviceId,
+            moisture_value: Math.floor(Math.random() * 4096),
+            moisture_percent: Math.random() * 100,
+            temperature: 22 + Math.random() * 5,
+            humidity: 40 + Math.random() * 30,
+            timestamp: Date.now(),
+            status: getStatusText(Math.random() * 100)
+        };
+        
+        // Uncomment for demo mode
+        // updateUI(demoData);
     }
 }
 
